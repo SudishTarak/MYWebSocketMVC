@@ -1,0 +1,63 @@
+﻿@using WebSocketMVC.Models;
+@model IEnumerable<WebSocketEndpoint>
+
+@{
+    ViewBag.Title = "WebSocket POC";
+}
+
+<h2>WebSocket POC</h2>
+
+<select id="listenerDropdown">
+    @foreach (var listener in Model)
+    {
+        <!-- Use Name for display and Url as the value -->
+        <option value="@listener.Url">@listener.Name</option>
+    }
+</select>
+
+<button id="connectButton">Connect and Send Message</button>
+<p id="responseMessage"></p>
+<p id="connectionStatus"></p>
+
+<script>
+    var socket; // Global variable to manage WebSocket connection
+
+    document.getElementById('connectButton').addEventListener('click', function () {
+        // Get selected WebSocket endpoint from dropdown
+        var selectedListener = document.getElementById('listenerDropdown').value;
+
+        // Close existing WebSocket connection if any
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.close();
+        }
+
+        // Create a new WebSocket connection
+        socket = new WebSocket(selectedListener);
+        console.log('WebSocket object created:', socket);
+
+        // When the connection is open, send a message to the server
+        socket.onopen = function (event) {
+            console.log('WebSocket connection established to ' + selectedListener);
+            document.getElementById('connectionStatus').textContent = 'Connected to ' + selectedListener;
+            socket.send('Hello from the client!');
+        };
+
+        // When a message is received from the server, display it
+        socket.onmessage = function (event) {
+            console.log('Received from server: ' + event.data);
+            document.getElementById('responseMessage').textContent = 'Received from server: ' + event.data;
+        };
+
+        // When the connection is closed, log the closure
+        socket.onclose = function (event) {
+            console.log('WebSocket connection closed.');
+            document.getElementById('connectionStatus').textContent = 'Disconnected from ' + selectedListener;
+        };
+
+        // If there's an error, log the error
+        socket.onerror = function (error) {
+            console.error('WebSocket error: ', error);
+            document.getElementById('connectionStatus').textContent = 'WebSocket error: ' + error.message;
+        };
+    });
+</script>
